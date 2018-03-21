@@ -1,0 +1,22 @@
+{
+  "name": "rtsupport",
+  "version": "0.0.1",
+  "description": "started from a tutorial",
+  "main": "/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack-dev-server --inline --hot"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FoxChrisRealTheGit/realtime-support"
+  },
+  "author": "Christopher Fox",
+  "license": "ISC",
+  "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "webpack": "^4.1.1"
+  }
+}
