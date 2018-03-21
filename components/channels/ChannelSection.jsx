@@ -4,6 +4,7 @@ import ChannelList from './ChannelList.jsx';
 
 export default class ChannelSection extends React.Component {
     render() {
+      
         return (
             <div className="support panel panel-primary">
                 <div className="panel-heading">
