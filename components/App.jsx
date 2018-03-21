@@ -2,6 +2,7 @@ import React from 'react';
 import ChannelSection from './channels/ChannelSection.jsx';
 import UsersSection from './users/UsersSection.jsx';
 import MessagesSection from './messages/MessagesSection.jsx';
+import Socket from '../socket';
 
 export default class App extends React.Component {
     constructor(props) {
@@ -10,33 +11,79 @@ export default class App extends React.Component {
             channels: [],
             users: [],
             messages: [],
-            activeChannel:'',
+            activeChannel: '',
+            connected: false,
         }
     }
-    addChannel(name) {
-        let tempchans = this.state.channels
-        tempchans.push({ id: tempchans.length, name })
+    componentDidMount() {
+       let socket = this.socket = new Socket();
+        socket.on("connect", this.onConnect.bind(this))
+        socket.on("disconnect", this.onDisconnect.bind(this))
+        socket.on("channel add", this.onAddChannel.bind(this))
+        socket.on("user add", this.onAddUser.bind(this))
+        socket.on("user edit", this.onEditUser.bind(this))
+        socket.on("user remove", this.onRemoveUser.bind(this))
+        socket.on("message add", this.onMessageAdd.bind(this))
+
+    }
+    onMessageAdd(message) {
+        let tempMessages = this.state.messages
+        tempmessages.push(message)
+        this.setState({ messages: tempMessages })
+    }
+    onRemoveUser(removeUser) {
+        let tempusers = this.state.users.filter(x => {
+            return x.id !== removeUser.id
+        })
+        this.setState({ users: tempusers })
+    }
+    onAddUser(user) {
+        let tempusers = this.state.users
+        tempusers.push(user)
+        this.setState({ users: tempusers })
+    }
+    onEditUser(editUser) {
+        let tempusers = this.state.users.map(x => {
+            if (editUser.id === x.id) {
+                return editUser;
+            } else {
+                return x
+            }
+            this.setState({ users: tempusers })
+        })
+        this.setState({ users: tempusers })
+    }
+    onConnect() {
+        this.setState({ connected: true })
+        this.socket.emit("channel subscribe")
+        this.socket.emit("user subscribe")
+    }
+    onDisconnect() {
+        this.setState({ connected: false })
+    }
+
+    onAddChannel(channel) {
+        let tempchans = this.state.channels;
+        tempchans.push(channel);
         this.setState({ channels: tempchans })
-        // TODO: Send to server
+    }
+    addChannel(name) {
+        this.socket.emit("channel add", { name })
     }
     setChannel(activeChannel) {
         this.setState({ activeChannel: activeChannel });
-        // TODO: Get Channels Messages
+        this.socket.emit("message unsubscribe")
+        this.setState({ messages: [] })
+        this.socket.emit("message subscribe",
+            { channelId: activeChannel.id })
     }
-    setUserName(name){
-        let tempusers = this.state.users;
-        tempusers.push({id: tempusers.length, name});
-        this.setState({users: tempusers}); 
-        //TODO: Send to server
+    setUserName(name) {
+        this.socket.emit("user edit", { name })
     }
 
-    addMessage(body){
-        let createdAt = new Date;
-        let author = this.state.users.length>0? this.state.users[0].name: "anonymous";
-        let tempmessages = this.state.messages;
-        tempmessages.push({id: tempmessages.length, body, createdAt, author});
-        this.setState({messages: tempmessages})
-        // TODO: Send to server
+    addMessage(body) {
+        this.socket.emit("message add",
+            { channelId: this.state.activeChannel.id, body })
     }
     render() {
         return (
@@ -47,14 +94,14 @@ export default class App extends React.Component {
                         addChannel={this.addChannel.bind(this)}
                         setChannel={this.setChannel.bind(this)}
                     />
-                    <UsersSection 
+                    <UsersSection
                         {...this.state}
-                        setUserName={this.setUserName.bind(this)}/>
+                        setUserName={this.setUserName.bind(this)} />
 
                 </div>
-                    <MessagesSection 
-                        {...this.state}
-                        addMessage={this.addMessage.bind(this)}/>
+                <MessagesSection
+                    {...this.state}
+                    addMessage={this.addMessage.bind(this)} />
             </div>
 
         )
